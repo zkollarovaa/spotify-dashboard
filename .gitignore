@@ -1,0 +1,107 @@
+# Byte-compiled / optimized / DLL files
+
+**pycache**/
+*.py[cod]
+*$py.class
+
+# C extensions
+
+*.so
+
+# Distribution / packaging
+
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+
+venv/
+env/
+ENV/
+.venv/
+
+# Environment variables
+
+.env
+.env.*
+*.env
+
+# Dash / Flask specific
+
+instance/
+.webassets-cache
+
+# Logs
+
+*.log
+
+# SQLite databases (common in Dash apps)
+
+*.sqlite3
+*.db
+
+# Jupyter Notebook checkpoints (if used for data prep)
+
+.ipynb_checkpoints
+
+# Pytest / coverage
+
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Type checker
+
+.mypy_cache/
+.pyre/
+
+# VS Code
+
+.vscode/
+
+# PyCharm
+
+.idea/
+
+# macOS
+
+.DS_Store
+
+# Windows
+
+Thumbs.db
+
+# Temporary files
+
+*.swp
+*.swo
+*~
+
+
+
+# Static assets build (if you compile assets)
+
+assets/build/
+
+# Node modules (if you use frontend tooling)
+
+node_modules/
+
+# Secrets
+
+secrets.json
+config.json

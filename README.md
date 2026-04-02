@@ -39,4 +39,4 @@ pip install -r requirements.txt
 
 ---
 
-### How to run the dashboard
+### Clean + prepare the data

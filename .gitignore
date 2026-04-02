@@ -105,3 +105,6 @@ node_modules/
 
 secrets.json
 config.json
+
+# Ignore the extra folder and everything inside it
+extra/**

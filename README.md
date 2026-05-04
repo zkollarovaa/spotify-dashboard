@@ -1,37 +1,28 @@
 # How to run this spotify dashboard
 
-### Create a virtual environment:
+### 1. Create a virtual environment:
 
 ```bash
 python -m venv venv
 ```
 
 
-### Activate the environment
-
-**On macOS / Linux:**
+### 2. Activate the environment
 
 ```bash
+# On macOS / Linux:
 source venv/bin/activate
-```
 
-**On Windows (Command Prompt):**
-
-```bash
+# On Windows (Command Prompt):
 venv\Scripts\activate
-```
 
-**On Windows (PowerShell):**
-
-```bash
+# On Windows (PowerShell):
 venv\Scripts\Activate.ps1
 ```
 
 ---
 
-### After activation
-
-Install requirements:
+### 3. After activation install requirements:
 
 ```bash
 pip install -r requirements.txt
@@ -39,4 +30,8 @@ pip install -r requirements.txt
 
 ---
 
-### Clean + prepare the data
+### 4. Run the app
+
+```bash
+python main.py
+```

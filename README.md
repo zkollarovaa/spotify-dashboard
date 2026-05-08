@@ -36,11 +36,6 @@ pip install -r requirements.txt
 python main.py
 ```
 
-
-
-
-
-
 ***
 
 ### Interactive Exploration: Brushing & Linking
@@ -50,3 +45,11 @@ python main.py
 *   **The Brush (Selection):** Users can use the **Lasso Tool** on the Master Scatter Plot (Chart 1) to "brush" over a cluster of interesting data points (e.g., songs with high TikTok views but low Spotify streams).
 *   **The Link (Coordination):** The moment the selection is made, that exact cohort of songs is "linked" and highlighted simultaneously across Charts 2, 3, and 4.
 *   **Context Preservation:** Unselected tracks are not deleted from the screen. Instead, they fade into a transparent grey (`opacity=0.05`). This instantly reveals where your selected niche sits compared to the macro-level industry trends.
+
+#### Picture Example (With selection)
+![Dashboard Preview](image_with_selection.png)
+
+#### Picture Example (Without selection)
+![Dashboard Preview](image.png)
+
+***

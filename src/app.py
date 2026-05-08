@@ -57,9 +57,9 @@ app.layout = html.Div(
                     html.Div([
                         html.Strong("1. Master Comparison (Brush Here)", style={'fontSize':'14px'}),
                         html.Div([
-                            dcc.Dropdown(id='s1-y', options=METRIC_OPTIONS, value='tiktok_views', clearable=False, style={'width': '48%', 'fontSize':'12px'}),
+                            dcc.Dropdown(id='s1-y', options=METRIC_OPTIONS, value='track_score', clearable=False, style={'width': '48%', 'fontSize':'12px'}),
                             html.Span(" vs ", style={'paddingTop':'5px', 'fontSize':'12px'}),
-                            dcc.Dropdown(id='s1-x', options=METRIC_OPTIONS, value='spotify_streams', clearable=False, style={'width': '48%', 'fontSize':'12px'})
+                            dcc.Dropdown(id='s1-x', options=METRIC_OPTIONS, value='spotify_popularity', clearable=False, style={'width': '48%', 'fontSize':'12px'})
                         ], style={'display': 'flex', 'justifyContent': 'space-between', 'marginTop':'5px'})
                     ], style={'padding': '10px 10px 0 10px'}),
                     dcc.Graph(id="master-scatter", style={'height': '280px'})
@@ -121,7 +121,7 @@ def update_master_scatter(x_col, y_col):
     fig1 = px.scatter(
         df, x=x_col, y=y_col, 
         hover_name="track", hover_data=["artist"],
-        color="spotify_popularity", color_continuous_scale="Viridis",
+        color="spotify_popularity", color_continuous_scale="Plasma",
         custom_data=[df.index] # Crucial for linking
     )
     fig1.update_layout(
@@ -200,7 +200,7 @@ def update_linked_charts(selectedData, dist_metric):
     fig3 = px.scatter(
         df, x="airplay_spins", y="shazam_counts", size="spotify_popularity",
         hover_name="track", hover_data=["artist"], color="explicit_label",
-        color_discrete_map={'Clean': '#2ca02c', 'Explicit': '#d62728'},
+        color_discrete_map={'Clean': "#68B5E8", 'Explicit': "#E87A19"},
         custom_data=[df.index]
     )
     fig3.update_layout(

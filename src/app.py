@@ -22,7 +22,6 @@ if 'explicit_track' in df.columns:
 else:
     df['explicit_label'] = 'Unknown'
 
-
 METRIC_OPTIONS =[
     {'label': 'Track Score (Overall)', 'value': 'track_score'},
     {'label': 'Spotify Streams', 'value': 'spotify_streams'},
@@ -74,32 +73,36 @@ app.layout = html.Div(
                     dcc.Graph(id="dist-chart", style={'height': '280px'})
                 ], style={'width': '48%', 'backgroundColor': 'white', 'boxShadow': '0 2px 4px rgba(0,0,0,0.1)', 'borderRadius': '8px'}),
                 
-                # BOX 3: Discovery Engine (Radio vs Organic)
+                # BOX 3: Explicit vs Clean Analysis (dynamic container for multiple chart types)
                 html.Div([
                     html.Div([
                         html.Strong([
-                            "3. Discovery Engine: Radio vs. Shazam ",
+                            "3. Explicit vs. Clean Analysis ",
                             # Hover Tooltip Icon with Explanation
                             html.Span("ⓘ", 
-                                      title="Explicit: Tracks colored in red contain strong language or mature themes. Clean tracks are green.", 
+                                      title="Explicit: Tracks contain strong language or mature themes (Orange). Clean: No explicit content (Purple).",
                                       style={'cursor': 'help', 'color': '#888', 'fontSize': '14px', 'marginLeft': '5px'})
-                        ], style={'fontSize':'14px'}),
-                        html.P("Traditional push (Airplay) vs Organic fan discovery (Shazam)", 
-                            style={'fontSize':'11px', 'margin':'0', 'color':'#777'})
+                        ], style={'fontSize':'14px', 'display': 'flex', 'alignItems': 'center'}),
+                        # dynamic tool dropdown for chart type selection
+                        dcc.Dropdown(
+                            id='c3-type', 
+                            options=[
+                                {'label': '100% Stacked Bar (Proportions)', 'value': 'stacked'},
+                                {'label': 'Pie Chart (At-a-Glance Composition)', 'value': 'pie'},
+                                {'label': 'Box Plot (Streams Distribution)', 'value': 'box'}
+                            ], 
+                            value='box', 
+                            clearable=False, 
+                            style={'width': '100%', 'marginTop':'5px', 'fontSize':'12px'}
+                        )
                     ], style={'padding': '10px 10px 0 10px'}),
-                    dcc.Graph(id="discovery-scatter", style={'height': '280px'})
+                    dcc.Graph(id="explicit-analysis-chart", style={'height': '280px'})
                 ], style={'width': '48%', 'backgroundColor': 'white', 'boxShadow': '0 2px 4px rgba(0,0,0,0.1)', 'borderRadius': '8px'}),
-                
+               
                 # BOX 4: Playlist Strategy (Count vs Reach)
                 html.Div([
                     html.Div([
-                        html.Strong([
-                            "4. Playlist Strategy: Niche vs. Mega-Hits ",
-                            # Hover Tooltip Icon with Explanation
-                            html.Span("ⓘ", 
-                                      title="Volume: Total number of individual playlists featuring the song.\nFollowers (Reach): The combined audience size of all those playlists.\nTop-Left: Label pushed (huge reach, few playlists).\nBottom-Right: Organic fan growth (many small user playlists).\nLighter yellow dots = higher actual streams.", 
-                                      style={'cursor': 'help', 'color': '#888', 'fontSize': '14px', 'marginLeft': '5px'})
-                        ], style={'fontSize':'14px', 'display':'block', 'marginBottom':'5px'}),
+                        html.Strong("4. Playlist Strategy: Niche vs. Mega-Hits", style={'fontSize':'14px', 'display':'block', 'marginBottom':'5px'}),
                         html.P("Volume of Playlists vs Total Playlist Follower Reach", 
                             style={'fontSize':'11px', 'margin':'0', 'color':'#777'})
                     ], style={'padding': '10px 10px 0 10px'}),
@@ -112,137 +115,131 @@ app.layout = html.Div(
 
 # --- 4. CALLBACKS ---
 
-# Callback 1: Only updates Chart 1 when you change the Dropdowns
+# Callback 1: Master Scatter Plot
 @app.callback(
-    Output("master-scatter", "figure"),[Input("s1-x", "value"), 
-     Input("s1-y", "value")]
+    Output("master-scatter", "figure"),
+    [Input("s1-x", "value"), Input("s1-y", "value")]
 )
 def update_master_scatter(x_col, y_col):
     fig1 = px.scatter(
         df, x=x_col, y=y_col, 
         hover_name="track", hover_data=["artist"],
         color="spotify_popularity", color_continuous_scale="Plasma",
-        custom_data=[df.index] # Crucial for linking
+        custom_data=[df.index] 
     )
     fig1.update_layout(
         dragmode="lasso", template="plotly_white", margin=dict(l=30, r=20, t=20, b=20),
         xaxis_title=get_label(x_col), yaxis_title=get_label(y_col)
     )
-
     return fig1
 
+# Callback 2: Linked Charts
 @app.callback([Output("dist-chart", "figure"),
-     Output("discovery-scatter", "figure"),
+     Output("explicit-analysis-chart", "figure"),
      Output("playlist-scatter", "figure")],[Input("master-scatter", "selectedData"),
-     Input("dist-metric", "value")]
+     Input("dist-metric", "value"),
+     Input("c3-type", "value")]
 )
-def update_linked_charts(selectedData, dist_metric):
+def update_linked_charts(selectedData, dist_metric, c3_type):
     
-    # Extract indices of selected points
+    # 1. Handle Selection
     if selectedData and 'points' in selectedData:
         selected_indices = [point['customdata'][0] for point in selectedData['points']]
+        target_df = df.iloc[selected_indices].copy()
+        chart_title_prefix = "Selection"
     else:
-        selected_indices = None # None means no active selection
+        selected_indices = None 
+        target_df = df.copy()
+        chart_title_prefix = "Global"
 
-    # Dictionary applied to the scatters to dim unselected points
     unselected_style = dict(marker=dict(opacity=0.05, color='lightgrey'))
+    color_map = {'Clean': '#6A00A8', 'Explicit': '#FCA636'} 
 
-    # 2. Dynamic Top 10 Bar Chart
-    if selected_indices:
-        target_df = df.iloc[selected_indices]
-        chart_title = "Top Songs in Selection"
-    else:
-        target_df = df
-        chart_title = "Global Top 10"
-
-    # Get the Top 10 (using .copy() to prevent pandas warnings)
+    # ---------------------------------------------------------
+    # 2. Dynamic Top 10 Bar Chart (Chart 2)
+    # ---------------------------------------------------------
     top_10 = target_df.nlargest(10, dist_metric).copy()
-    
-    # Sort ascending so the #1 song is at the top of the chart
     top_10 = top_10.sort_values(by=dist_metric, ascending=True)
-
-    # truncate track names for better display, but keep full names in hover
+    
     max_chars = 22
-    top_10['track_short'] = top_10['track'].apply(
-        lambda x: str(x)[:max_chars] + '...' if len(str(x)) > max_chars else str(x)
-    )
+    top_10['track_short'] = top_10['track'].apply(lambda x: str(x)[:max_chars] + '...' if len(str(x)) > max_chars else str(x))
 
     fig2 = px.bar(
-        top_10, 
-        x=dist_metric, 
-        y="track_short", # Use truncated names for display
-        orientation='h',
-        text="artist", 
-        color=dist_metric, 
-        color_continuous_scale=["#3b73b9", "#04295e"], 
-        hover_name="track" # Pass the full name into the graph for the hover tool
+        top_10, x=dist_metric, y="track_short", orientation='h',
+        text="artist", color=dist_metric, color_continuous_scale=["#3b73b9", "#04295e"], 
+        hover_name="track" 
     )
-    
     fig2.update_layout(
-        template="plotly_white", 
-        margin=dict(l=10, r=20, t=30, b=20),
-        xaxis_title=get_label(dist_metric), 
-        yaxis_title=None, 
-        title=dict(text=chart_title, font=dict(size=12)),
+        template="plotly_white", margin=dict(l=10, r=20, t=30, b=20),
+        xaxis_title=get_label(dist_metric), yaxis_title=None, 
+        title=dict(text=f"{chart_title_prefix} Top 10", font=dict(size=12)),
         coloraxis_showscale=False 
     )
-    
-    # Style the text labels inside the bars and the hover box
-    fig2.update_traces(
-        textposition='inside', 
-        textfont=dict(color='white'),
-        # This formats the hover box: <b>Full Track Name</b>, Artist, Value. 
-        # <extra></extra> hides the ugly secondary "trace" label plotly adds by default.
-        hovertemplate="<b>%{hovertext}</b><br>Artist: %{text}<br>Value: %{x}<extra></extra>"
-    )
+    fig2.update_traces(textposition='inside', textfont=dict(color='white'), hovertemplate="<b>%{hovertext}</b><br>Artist: %{text}<br>Value: %{x}<extra></extra>")
 
-    # 3. Discovery Scatter (Airplay vs Shazam)
-    fig3 = px.scatter(
-        df, x="airplay_spins", y="shazam_counts", size="spotify_popularity",
-        hover_name="track", hover_data=["artist"], color="explicit_label",
-        color_discrete_map={'Clean': "#68B5E8", 'Explicit': "#E87A19"},
-        custom_data=[df.index]
-    )
-    fig3.update_layout(
-        template="plotly_white", margin=dict(l=30, r=20, t=20, b=20),
-        xaxis_title="Airplay Spins (Radio)", yaxis_title="Shazams (Organic Discovery)",
-        uirevision='constant' # Prevents zoom reset
-    )
-    fig3.update_traces(selectedpoints=selected_indices, unselected=unselected_style)
+    # ---------------------------------------------------------
+    # 3. Dynamic Explicit vs Clean Analysis (Chart 3)
+    # ---------------------------------------------------------
+    if c3_type == 'stacked':
+        # 100% Stacked Bar using Plotly Histogram with percent norm
+        target_df['Category'] = 'All Tracks' # Dummy column to group them on one bar
+        fig3 = px.histogram(
+            target_df, y="Category", color="explicit_label", 
+            color_discrete_map=color_map, barnorm='percent', orientation='h',
+            text_auto='.1f' # Shows the actual percentage text inside the bar
+        )
+        fig3.update_layout(
+            barmode='stack', xaxis_title="Percentage (%)", yaxis_title=None,
+            template="plotly_white", margin=dict(l=10, r=20, t=30, b=20),
+            title=dict(text=f"{chart_title_prefix} Proportions", font=dict(size=12))
+        )
+        
+    elif c3_type == 'pie':
+        # Pie Chart
+        counts = target_df['explicit_label'].value_counts().reset_index()
+        counts.columns = ['explicit_label', 'count']
+        fig3 = px.pie(
+            counts, names='explicit_label', values='count', 
+            color='explicit_label', color_discrete_map=color_map, hole=0.3
+        )
+        fig3.update_layout(
+            template="plotly_white", margin=dict(l=20, r=20, t=30, b=20),
+            title=dict(text=f"{chart_title_prefix} Composition", font=dict(size=12))
+        )
 
-    # 4. Playlist Strategy Scatter (Count vs Reach)
+    elif c3_type == 'box':
+        # Box Plot showing distributions
+        fig3 = px.box(
+            target_df, x="explicit_label", y="spotify_streams", 
+            color="explicit_label", color_discrete_map=color_map, points="all" # Shows individual dots beside the box
+        )
+        fig3.update_layout(
+            template="plotly_white", margin=dict(l=30, r=20, t=30, b=20),
+            xaxis_title="Content Rating", yaxis_title="Spotify Streams",
+            title=dict(text=f"{chart_title_prefix} Stream Distribution", font=dict(size=12))
+        )
+
+    # ---------------------------------------------------------
+    # 4. Playlist Strategy Scatter (Chart 4 - Visual Filtering)
+    # ---------------------------------------------------------
     fig4 = px.scatter(
         df, x="spotify_playlist_count", y="spotify_playlist_reach",
         hover_name="track", hover_data=["artist"], color="spotify_streams", 
         color_continuous_scale="Plasma", custom_data=[df.index]
     )
+    
+    if not selected_indices:
+        fig4.update_traces(selectedpoints=None, unselected=dict(marker=dict(opacity=0.7)))
+    else:
+        for trace in fig4.data:
+            local_indices =[i for i, df_idx in enumerate(trace.customdata) if df_idx[0] in selected_indices]
+            trace.selectedpoints = local_indices
+            trace.unselected = unselected_style
+
     fig4.update_layout(
         template="plotly_white", margin=dict(l=30, r=20, t=20, b=20),
         xaxis_title="Playlist Count (Volume)", yaxis_title="Playlist Reach (Followers)",
-        uirevision='constant' # Prevents zoom reset
+        uirevision='constant'
     )
-    fig4.update_traces(selectedpoints=selected_indices, unselected=unselected_style)
-
-    for fig in [fig3, fig4]:
-        if not selected_indices:
-            # If nothing is selected, make sure everything is full opacity
-            fig.update_traces(selectedpoints=None, unselected=dict(marker=dict(opacity=0.7)))
-        else:
-            # Loop through every trace in the figure (Clean, Explicit, etc.)
-            for trace in fig.data:
-                # Find which points in this trace match the global selected indices
-                # trace.customdata contains the original DF indices we passed in px.scatter
-                local_indices = [
-                    i for i, df_idx in enumerate(trace.customdata) 
-                    if df_idx[0] in selected_indices
-                ]
-                # Apply selection to this specific trace
-                trace.selectedpoints = local_indices
-                trace.unselected = unselected_style
-
-        fig.update_layout(
-            template="plotly_white", margin=dict(l=30, r=20, t=20, b=20),
-            uirevision='constant'
-        )
 
     return fig2, fig3, fig4

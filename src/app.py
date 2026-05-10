@@ -55,7 +55,7 @@ app.layout = html.Div(
                 # BOX 1: Master Scatter Plot
                 html.Div([
                     html.Div([
-                        html.Strong("1. Master Comparison (Brush Here)", style={'fontSize':'14px'}),
+                        html.Strong("1. Master Comparison", style={'fontSize':'14px'}),
                         html.Div([
                             dcc.Dropdown(id='s1-y', options=METRIC_OPTIONS, value='track_score', clearable=False, style={'width': '48%', 'fontSize':'12px'}),
                             html.Span(" vs ", style={'paddingTop':'5px', 'fontSize':'12px'}),
@@ -69,7 +69,7 @@ app.layout = html.Div(
                 html.Div([
                     html.Div([
                         html.Strong("2. Leaderboard: Top 10 Tracks", style={'fontSize':'14px'}),
-                        dcc.Dropdown(id='dist-metric', options=METRIC_OPTIONS, value='spotify_popularity', clearable=False, style={'width': '100%', 'marginTop':'5px', 'fontSize':'12px'})
+                        dcc.Dropdown(id='dist-metric', options=METRIC_OPTIONS, value='track_score', clearable=False, style={'width': '100%', 'marginTop':'5px', 'fontSize':'12px'})
                     ], style={'padding': '10px 10px 0 10px'}),
                     dcc.Graph(id="dist-chart", style={'height': '280px'})
                 ], style={'width': '48%', 'backgroundColor': 'white', 'boxShadow': '0 2px 4px rgba(0,0,0,0.1)', 'borderRadius': '8px'}),

@@ -3,7 +3,7 @@
 ### 1. Create a virtual environment:
 
 ```bash
-python -m venv venv
+python -m venv .venv
 ```
 
 
@@ -11,13 +11,13 @@ python -m venv venv
 
 ```bash
 # On macOS / Linux:
-source venv/bin/activate
+source .venv/bin/activate
 
 # On Windows (Command Prompt):
-venv\Scripts\activate
+.venv\Scripts\activate
 
 # On Windows (PowerShell):
-venv\Scripts\Activate.ps1
+.venv\Scripts\Activate.ps1
 ```
 
 ---

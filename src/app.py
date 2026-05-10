@@ -38,7 +38,6 @@ def get_label(value):
 
 # --- 2. INITIALIZE APP ---
 app = Dash(__name__)
-server = app.server
 
 # --- 3. APP LAYOUT ---
 app.layout = html.Div(
